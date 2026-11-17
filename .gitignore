@@ -1,0 +1,23 @@
+# local tooling / test output
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+screenshots/
+node_modules/
+.DS_Store
+
+# pipeline working files (not part of the site)
+AGENT_NOTES_*.md
+QA_REPORT.md
+art-briefs/
+tools/
+cricket-preview.html
+assets/generation-manifest.json
+assets/generation-report.md
+assets/planets/generation-prompts.md
+assets/planets/validation.json
+assets/planets/*_v1.png
+assets/planets/station_achievements.png
+assets/planets/train_alstom.png
+assets/textures/
