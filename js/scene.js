@@ -328,7 +328,7 @@
     function updatePushGoals() {
       // mobile zoom: non-selected planets slide away from the selected one, off-screen
       planets.forEach(function (pl, i) {
-        if (zoomMode && selected >= 0 && i !== selected) {
+        if (zoomMode && selected >= 0 && i !== selected && !travel) {   // mobile flight: real layout (route visible)
           pushV.subVectors(pl.base, planets[selected].base); pushV.z = 0;
           if (pushV.lengthSq() < 1e-4) pushV.set(1, 0, 0);
           pl.offGoal.copy(pushV.normalize().multiplyScalar(18));
@@ -424,6 +424,7 @@
       return padPoint(i, out).addScaledVector(planets[i].dockDir, SHIP_CLEAR + 1.1);
     }
     var shipAt = opts.shipStart != null ? opts.shipStart : 0, travel = null, landing = null;
+    var MOBILE_FLIGHT_SPEED = 1.5;   // mobile zoom: whole flight (orbit + hop) ≈ 2.5 s
     var ORBIT_SECONDS = 1.2, HOP_SECONDS = 2.5, BUMP_SECONDS = 0.3, RAMP = 0.3, LAND_SPEED = 0.6;
     /* Off-screen select: the off-screen part of the journey is skipped. The rocket is moved just outside the
        viewport edge facing its old position and flies straight in to an entry point near the target in
@@ -647,6 +648,7 @@
         startPhase(makeOrbit(v), carry);
       } else {
         shipAt = tr.to; landing = { t: 0, id: travel.id, at: shipAt }; travel = null; bumpPeak = 1;
+        updatePushGoals();
       }
     }
 
@@ -703,7 +705,7 @@
     function selectPlanet(i, so) {
       if (i === selected) return !!travel || !!landing;
       var progress = so && so.progress != null ? so.progress : null;   // desktop: page scroll the view is heading to
-      directJump = progress != null;   // the page scrolls for this jump: no route hops / slingshots at other planets
+      directJump = progress != null || zoomMode;   // page-scroll jump / mobile: straight to the target, no hops at other planets
       selected = i;
       updatePushGoals();
       if (zoomMode) frameGoal(false);      // mobile: the view is about to move to the new planet - judge against that
@@ -719,7 +721,8 @@
       if (!travel && shipAt === i) return false;
       var nodes = travel ? null : (findPath(shipAt, i) || [shipAt, i]);
       travel = { id: ++flightId, to: i, nodes: nodes, log: travel ? travel.log : [], clock: travel ? travel.clock : 0, rerouted: !!travel };
-      if (warpOn && !rocketOnScreen(progress)) { flyIn(i, progress); return true; }   // off-screen: skip to the edge
+      updatePushGoals();                     // mobile: un-push the planets for the flight
+      if (warpOn && !zoomMode && !rocketOnScreen(progress)) { flyIn(i, progress); return true; }   // off-screen: skip to the edge
       if (!ph) startPhase(departOrbit(shipAt, nodes.slice(1), i, 0));                  // docked: orbit, then go
       else if (ph.kind === 'orbit' && ph.planet != null) {
         var r = retargetOrbit(ph, i); travel.nodes = [ph.planet].concat(r.rest); startPhase(r);   // keep circling, re-aim
@@ -917,6 +920,7 @@
         camTargetGoal.copy(pl.base);
         // nudge so the sprite (towers reach above the body) sits in the free area between HUD and docked callout
         camTargetGoal.y += (hudPx - 150) / H * camDistGoal * tanV + pl.proj.radius * 0.18;
+        if (travel && !reduced) { camTargetGoal.copy(ship.position); camTargetGoal.y += (hudPx - 60) / H * camDistGoal * tanV; }   // in flight: follow the rocket
       } else {
         camDistGoal = deskDist; camTargetGoal.copy(deskTarget);
       }
@@ -1075,10 +1079,10 @@
 
       // ship: step the current journey phase; then the landing settle; then report onArrive
       var bank = 0, bankAxis = null, upright = null;
-      var simDt = dt;
+      var simDt = zoomMode && travel ? dt * MOBILE_FLIGHT_SPEED : dt;
       frameStartPos.copy(ship.position);
       var flew = !!travel;
-      if (travel) stepFlight(dt);
+      if (travel) stepFlight(simDt);
       if (simDt <= 0) simDt = dt;
       if (travel) {
         var cp = travel.phase, x = Math.min(1, cp.t / cp.T);
@@ -1129,7 +1133,7 @@
 
       // camera
       frameGoal(false);
-      var kc = reduced ? 1 : 1 - Math.exp(-dt * 3.5);
+      var kc = reduced ? 1 : 1 - Math.exp(-dt * (zoomMode && travel ? 5 : 3.5));   // mobile flight: follow with a slight lag
       camTarget.lerp(camTargetGoal, kc);
       camDist += (camDistGoal - camDist) * kc;
       camLook.copy(camTarget); camLook.y += scrollPan;

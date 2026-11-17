@@ -434,6 +434,9 @@ button { font: inherit; color: inherit; }
 .callout.is-pending:not(.is-docked) { opacity: 0; visibility: hidden; pointer-events: none; transition: none; }
 .callout-body { transition: opacity .35s ease, transform .35s ease; }
 .callout.is-docked.is-pending .callout-body { opacity: 0; visibility: hidden; transform: translateY(6px); transition: none; }
+/* mobile in flight: the card shell disappears too (no empty frame) - only the floating ←/→ buttons stay for re-taps */
+.callout.is-docked.is-pending { background: transparent; border-color: transparent; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; transition: none; }
+.callout.is-docked { transition: opacity .35s ease, background-color .35s ease, border-color .35s ease, box-shadow .35s ease; }
 .callout.is-docked {
   left: 50%; top: auto; bottom: max(18px, env(safe-area-inset-bottom));
   transform: translateX(-50%) !important;
