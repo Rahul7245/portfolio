@@ -785,7 +785,7 @@ a.contact-value:hover { color: var(--cyan); }
   .menu-list { min-width: 0; width: calc(100vw - 36px); }
   .world { min-height: 600px; }
   .world-hint { display: none; }
-  .character-slot { height: 88px; width: 88px; bottom: 168px; left: 10px; }   /* clears the docked callout */
+  .character-slot { height: 88px; width: 88px; bottom: 168px; left: 10px; z-index: 11; }   /* clears the docked callout; sits ABOVE the card layer (callout z 10) */
   .character-img { height: 88px; }
   .planet-label { font-size: .95rem; padding: 4px 14px 4px 8px; }
   .projects { padding-top: 48px; }
@@ -804,6 +804,12 @@ a.contact-value:hover { color: var(--cyan); }
   .sheet-handle { display: block; width: 52px; height: 6px; border-radius: 6px; background: rgba(255, 255, 255, .45); margin: 10px auto 6px; flex: none; }
   .modal-close { top: 12px; right: 12px; width: 44px; height: 44px; }
   .modal-narrator { width: 120px; height: 120px; right: 66px; bottom: auto; top: -96px; }
+  /* mascot peeks ABOVE the sheet: WebKit/iOS paints a backdrop-filtered panel and its composited
+     scroller (.modal-body) over overflowing children, hiding the bird's lower half. The backdrop
+     already blurs, so drop the panel's own blur, pin the body to layer 0 and give the bird its own top layer. */
+  .modal.panel { -webkit-backdrop-filter: none; backdrop-filter: none; background: linear-gradient(180deg, rgba(38, 10, 78, .96) 0%, rgba(20, 4, 46, .97) 100%); }
+  .modal-body { position: relative; z-index: 0; }
+  .modal-narrator { z-index: 10; will-change: transform; }
   .narrator-bubble { right: calc(100% - 8px); bottom: 34px; max-width: min(200px, 52vw); font-size: .82rem; padding: 8px 11px; }
   .narrator-bubble::after { right: -9px; bottom: 12px; border: 9px solid transparent; border-left-color: #fff; border-right: 0; }
   .contact-row { flex-wrap: wrap; }
